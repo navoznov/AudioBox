@@ -63,11 +63,21 @@ def assignCardsToFolders(audioLibraryPath):
 
     for root, dirs, files in os.walk(audioLibraryPath):
         try:
+
+            # todo: если считывается уже использованная карта, то эта карта назначается на текущую папку, 
+            # а предыдущая папка (которая была до этого назначена) ""освобождается" и добавляется в список папок для назначения
             for dir in dirs:
-                # todo: добавить проверку, что карта еще не используется.
                 
-                # читаем карту (идентификатор и текст, который не используем)
-                id, text = cardReader.read()
+                # читаем карту. если уже используется, то снова читаем.
+                while True:
+                    # читаем карту (идентификатор и текст, который не используем)
+                    id, text = cardReader.read()
+                    
+                    if id in cards:
+                        print("This card is used already. Scan another card.")
+                    else:
+                        break
+
                 # склеиваем путь к папке из пути к библиотеке и названия папки
                 cards[id] = join(audioLibraryPath, dir)
                 print("{0} => {1}".format(dir, id))
