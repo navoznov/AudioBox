@@ -17,14 +17,17 @@ PlayPauseCardId = 123123
 # Возвращает полный путь к папке с музыкальной библиотекой
 def getAudioLibraryPath():
     currentFolder = os.getcwd()
-    return join(currentFolder, "Music")
+    audioLibrarySubfolderName = "Music"
+    return join(currentFolder, audioLibrarySubfolderName)
 
 # Проигрывает папку
 def playFolder(mixer, folderToPlay, useRandom):
     for root, dirs, files in os.walk(folderToPlay):
         playlist = files
 
-    # todo: добавить проверку что список файлов НЕпустой
+    if len(playlist) == 0:
+        print("The folder has no files")
+        return
 
     if useRandom:
         random.shuffle(playlist)
