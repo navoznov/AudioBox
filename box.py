@@ -4,78 +4,114 @@ import SimpleMFRC522
 
 import sys
 import vlc
-from  pygame import mixer
+from pygame import mixer
 
 import os
 from os.path import isfile, join
 from time import sleep
 import random
 
-def playFolder(toPlay, use_random):
-    
-    for root, dirs, files in os.walk(toPlay):
-        play_list = files
+# идентификатор карты для проигрывания/паузы
+PlayPauseCardId = 123123
 
-    if use_random:
-        random.shuffle(play_list)
-    f = play_list[0]
-    
+# Возвращает полный путь к папке с музыкальной библиотекой
+def getAudioLibraryPath():
+    currentFolder = os.getcwd()
+    return join(currentFolder, "Music")
+
+# Проигрывает папку
+def playFolder(mixer, folderToPlay, useRandom):
+    for root, dirs, files in os.walk(folderToPlay):
+        playlist = files
+
+    # todo: добавить проверку что список файлов НЕпустой
+
+    if useRandom:
+        random.shuffle(playlist)
+
+    # если проигрыватель занят, то стопаем его. 
     if mixer.music.get_busy():
-        print("stop")
+        print("Stop")
         mixer.music.stop()
-        
-    mixer.music.load(f)
-    print("play {}".format(f))
+
+    # запускаем проигрывание первого файла из списка
+    fileToPlay = playlist[0]       
+    mixer.music.load(fileToPlay)
+    print("Play {}".format(fileToPlay))
     mixer.music.play()
 
-    for q in play_list[1:]:
+    # ставим в очередь остальные файлы в списке
+    for q in playlist[1:]:
         mixer.music.queue(q)
-            
 
+# выводит информацию о библиотеке аудиозаписей
+def printAudioLibraryInfo(audioLibraryPath):
+    print('Audio library path: {}'.format(audioLibraryPath))
+    print('\n')
+    print('Folders in the audio library:')
+    for dirpath, dirnames, fileNames in os.walk(audioLibraryPath):
+        print(dirpath)
+                    
+# Для каждой папки в библиотеке с аудиозаписями назначает карту.
+# Возвращает словарь: ключ - id карты, значение - путь к папке.
+def assignCardsToFolders(audioLibraryPath):
+    dirs = []
+    cards = dict()
+
+    for root, dirs, files in os.walk(audioLibraryPath):
+        try:
+            for dir in dirs:
+                # todo: добавить проверку, что карта еще не используется.
+                
+                # читаем карту (идентификатор и текст, который не используем)
+                id, text = cardReader.read()
+                # склеиваем путь к папке из пути к библиотеке и названия папки
+                cards[id] = join(audioLibraryPath, dir)
+                print("{0} => {1}".format(dir, id))
+                # ставим задержку 1 секуду, чтобы одна и та же карта не 
+                sleep(1)        
+        except:
+            print("error")
+        finally:
+            print("cleanup")
+            GPIO.cleanup()
+    return cards
+
+# создаем инстанс кардридера            
 cardReader = SimpleMFRC522.SimpleMFRC522()
  
-currentFolder = os.getcwd()
-audioPath = join(currentFolder, "Music")
-print(audioPath)
+# получаем путь к папке с аудиозаписями    
+audioLibraryPath = getAudioLibraryPath()
 
-for a in os.walk(audioPath):
-    print(a)
+printAudioLibraryInfo(audioLibraryPath)
+
+# назначаем карты на папки с аудиозаписями
+assignedCards = assignCardsToFolders(audioLibraryPath)
     
 print("start")   
 
-dirs = []
-cards = dict()
-
-for root, dirs, files in os.walk(audioPath):
-    n = len(dirs)
-    print(n)
-    try:
-        for dir in dirs:
-            id, text = cardReader.read()
-            print("{0} => {1}".format(dir, id))
-            cards[id] = dir
-            sleep(1)        
-    except:
-        print("error")
-    finallyllall python
-    :
-        print("cleanup")
-        GPIO.cleanup()
-        
-GPIO.cleanup()
-
-
 mixer.init()
-
+isPaused = False
+useRandom = True
 while True:
     id, text = cardReader.read()
-    folder = cards.get(id)
-    if folder == None:
-        print("Unknown card")
-    else: 
-        toPlay = join(audioPath, folder)
-        
-        playFolder(toPlay, True)      
+    if id == PlayPauseCardId:
+        if mixer.get_busy(): 
+            if isPaused:
+                mixer.pause()
+                print("Pause")
+            else:
+                mixer.unpause()
+                print("Unpause")
+
+        else:
+            print("Choose and use one of the assigned cards")
+    else:
+        folder = assignedCards.get(id)
+        if folder == None:        
+            print("Unknown card")
+        else: 
+            playFolder(mixer, folder, useRandom)      
      
     sleep(1)
     
