@@ -7,23 +7,36 @@ import vlc
 from pygame import mixer
 
 import os
-from os.path import isfile, join
 from time import sleep
 import random
+
+from AudioBoxSettings import AudioBoxSettings
 
 # идентификатор карты для проигрывания/паузы
 PlayPauseCardId = 123123
 # задержка после считывания карты (до следующего считывания карты)
 cardReadingDelay = 1
+settingsFileName = "settings.ini"
 
-# Возвращает полный путь к папке с музыкальной библиотекой
+settings = AudioBoxSettings(settingsFileName)
+
+
 def getAudioLibraryPath():
-    currentFolder = os.getcwd()
-    audioLibrarySubfolderName = "Music"
-    return join(currentFolder, audioLibrarySubfolderName)
+    """
+    Возвращает полный путь к папке с музыкальной библиотекой
+    """
+    path = settings.getAudioLibraryPath()
+    if path == None:
+        currentFolder = os.getcwd()
+        audioLibrarySubfolderName = "Music"
+        path = os.path.join(currentFolder, audioLibrarySubfolderName)
+        settings.setAudioLibraryPath(path)
+    return path
 
-# Проигрывает папку
 def playFolder(mixer, folderToPlay, useRandom):
+    """
+    Воспроизводит аудиозаписи в папке
+    """
     for root, dirs, files in os.walk(folderToPlay):
         playlist = files
 
@@ -49,17 +62,22 @@ def playFolder(mixer, folderToPlay, useRandom):
     for q in playlist[1:]:
         mixer.music.queue(q)
 
-# выводит информацию о библиотеке аудиозаписей
+
 def printAudioLibraryInfo(audioLibraryPath):
+    """
+    выводит информацию о библиотеке аудиозаписей
+    """
     print('Audio library path: {}'.format(audioLibraryPath))
     print('\n')
     print('Folders in the audio library:')
     for dirpath, dirnames, fileNames in os.walk(audioLibraryPath):
         print(dirpath)
                     
-# Для каждой папки в библиотеке с аудиозаписями назначает карту.
-# Возвращает словарь: ключ - id карты, значение - путь к папке.
 def assignCardsToFolders(audioLibraryPath):
+    """
+    Для каждой папки в библиотеке с аудиозаписями назначает карту.
+    Возвращает словарь: ключ - id карты, значение - путь к папке.
+    """
     dirs = []
     cards = dict()
 
@@ -79,7 +97,7 @@ def assignCardsToFolders(audioLibraryPath):
                         break
 
                 # склеиваем путь к папке из пути к библиотеке и названия папки
-                cards[id] = join(audioLibraryPath, dir)
+                cards[id] = os.path.join(audioLibraryPath, dir)
                 print("{0} => {1}".format(dir, id))
                 # ставим задержку, чтобы одна и та же карта не считывалась несколько раз подряд
                 sleep(cardReadingDelay)        
@@ -89,6 +107,8 @@ def assignCardsToFolders(audioLibraryPath):
             print("cleanup")
             GPIO.cleanup()
     return cards
+
+
 
 # создаем инстанс кардридера            
 cardReader = SimpleMFRC522.SimpleMFRC522()
