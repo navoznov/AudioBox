@@ -12,14 +12,11 @@ import random
 
 from AudioBoxSettings import AudioBoxSettings
 
-# идентификатор карты для проигрывания/паузы
-PlayPauseCardId = 123123
 # задержка после считывания карты (до следующего считывания карты)
 cardReadingDelay = 1
 settingsFileName = "settings.ini"
 
 settings = AudioBoxSettings(settingsFileName)
-
 
 def getAudioLibraryPath():
     """
@@ -61,7 +58,6 @@ def playFolder(mixer, folderToPlay, useRandom):
     # ставим в очередь остальные файлы в списке
     for q in playlist[1:]:
         mixer.music.queue(q)
-
 
 def printAudioLibraryInfo(audioLibraryPath):
     """
@@ -108,15 +104,21 @@ def assignCardsToFolders(audioLibraryPath):
             GPIO.cleanup()
     return cards
 
-
+def assignPlayPauseCardIfNeed():
+    if PlayPauseCardId > 0:
+        return
 
 # создаем инстанс кардридера            
 cardReader = SimpleMFRC522.SimpleMFRC522()
  
 # получаем путь к папке с аудиозаписями    
 audioLibraryPath = getAudioLibraryPath()
+# идентификатор карты для проигрывания/паузы
+PlayPauseCardId = settings.getPlayPauseCardId()
 
 printAudioLibraryInfo(audioLibraryPath)
+
+
 
 # назначаем карты на папки с аудиозаписями
 assignedCards = assignCardsToFolders(audioLibraryPath)
