@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf8 -*-
+
 import RPi.GPIO as GPIO
 import MFRC522
-import SimpleMFRC522
 
 import sys
 import vlc
