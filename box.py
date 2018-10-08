@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import MFRC522
 import SimpleMFRC522
 
 import sys
